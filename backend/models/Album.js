@@ -14,9 +14,9 @@ const albumSchema = new mongoose.Schema({
     release_year: {
         type: Number
     },
-    cover_image: {
+    imageUrl: {
         type: String,
-        default: 'https://via.placeholder.com/150'
+        default: ''
     }
 }, { timestamps: true });
 

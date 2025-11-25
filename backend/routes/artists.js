@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const Artist = require('../models/Artist');
+const auth = require('../middleware/auth');
 
-// Create Artist
-router.post('/', async (req, res) => {
+// Create Artist (Protected, Admin Only)
+router.post('/', auth, async (req, res) => {
     try {
-        const { name, bio } = req.body;
-        const artist = new Artist({ name, bio });
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admins only.' });
+        }
+
+        const { name, bio, imageUrl } = req.body;
+        const artist = new Artist({ name, bio, imageUrl });
         await artist.save();
         res.status(201).json(artist);
     } catch (err) {
@@ -32,6 +37,28 @@ router.get('/:id', async (req, res) => {
         res.json(artist);
     } catch (err) {
         res.status(500).json({ message: 'Error fetching artist', error: err.message });
+    }
+});
+
+// Update Artist (Admin Only)
+router.put('/:id', auth, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
+        const artist = await Artist.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(artist);
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating artist', error: err.message });
+    }
+});
+
+// Delete Artist (Admin Only)
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
+        await Artist.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Artist deleted' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting artist', error: err.message });
     }
 });
 

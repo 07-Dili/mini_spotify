@@ -6,10 +6,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-mongoose.connect('mongodb://localhost:27017/mini-spotify', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+mongoose.connect('mongodb://localhost:27017/mini-spotify')
     .then(() => console.log('MongoDB Connected for Seeding'))
     .catch(err => console.error(err));
 
@@ -19,27 +16,66 @@ const seedData = async () => {
         await Album.deleteMany({});
         await Song.deleteMany({});
 
-        // Artists
-        const artist1 = await new Artist({ name: 'The Weekend', bio: 'Canadian singer, songwriter, and record producer.' }).save();
-        const artist2 = await new Artist({ name: 'Dua Lipa', bio: 'English singer and songwriter.' }).save();
-        const artist3 = await new Artist({ name: 'Tame Impala', bio: 'Australian psychedelic music project.' }).save();
-
-        // Albums
-        const album1 = await new Album({ title: 'After Hours', artist: artist1._id, release_year: 2020, cover_image: 'https://upload.wikimedia.org/wikipedia/en/c/c1/The_Weeknd_-_After_Hours.png' }).save();
-        const album2 = await new Album({ title: 'Future Nostalgia', artist: artist2._id, release_year: 2020, cover_image: 'https://upload.wikimedia.org/wikipedia/en/f/f5/Dua_Lipa_-_Future_Nostalgia_%28Official_Album_Cover%29.png' }).save();
-        const album3 = await new Album({ title: 'Currents', artist: artist3._id, release_year: 2015, cover_image: 'https://upload.wikimedia.org/wikipedia/en/9/9b/Tame_Impala_-_Currents.png' }).save();
-
-        // Songs
-        const songs = [
-            { title: 'Blinding Lights', duration: 200, genre: 'Synth-pop', mood: 'Energetic', album: album1._id, artist: artist1._id },
-            { title: 'Save Your Tears', duration: 215, genre: 'Synth-pop', mood: 'Melancholic', album: album1._id, artist: artist1._id },
-            { title: 'Levitating', duration: 203, genre: 'Disco-pop', mood: 'Happy', album: album2._id, artist: artist2._id },
-            { title: 'Don\'t Start Now', duration: 183, genre: 'Nu-disco', mood: 'Empowered', album: album2._id, artist: artist2._id },
-            { title: 'The Less I Know The Better', duration: 216, genre: 'Psychedelic Pop', mood: 'Groovy', album: album3._id, artist: artist3._id },
-            { title: 'Let It Happen', duration: 467, genre: 'Psychedelic Rock', mood: 'Trippy', album: album3._id, artist: artist3._id },
+        const artistsData = [
+            { name: 'A.R. Rahman', bio: 'The Mozart of Madras.' },
+            { name: 'Arijit Singh', bio: 'King of Playback Singing.' },
+            { name: 'Shreya Ghoshal', bio: 'Melody Queen.' },
+            { name: 'Sonu Nigam', bio: 'Versatile playback singer.' },
+            { name: 'Lata Mangeshkar', bio: 'Nightingale of India.' },
+            { name: 'Kishore Kumar', bio: 'Legendary singer and actor.' },
+            { name: 'Udit Narayan', bio: 'Padma Bhushan awardee.' },
+            { name: 'Mohit Chauhan', bio: 'Voice of the mountains.' },
+            { name: 'Sunidhi Chauhan', bio: 'Powerhouse performer.' },
+            { name: 'Badshah', bio: 'Indian rapper and singer.' },
+            { name: 'Diljit Dosanjh', bio: 'Punjabi superstar.' },
+            { name: 'Neha Kakkar', bio: 'Selfie Queen.' },
+            { name: 'Armaan Malik', bio: 'Prince of Romance.' },
+            { name: 'Jubin Nautiyal', bio: 'Soulful voice.' },
+            { name: 'Sid Sriram', bio: 'Carnatic and playback singer.' },
+            { name: 'Anirudh Ravichander', bio: 'Rockstar composer.' },
+            { name: 'Amit Trivedi', bio: 'Innovative composer.' },
+            { name: 'Pritam', bio: 'Hit machine.' },
+            { name: 'Vishal-Shekhar', bio: 'Dynamic duo.' },
+            { name: 'Shankar Mahadevan', bio: 'Breathless singer.' },
+            { name: 'Hariharan', bio: 'Ghazal maestro.' },
+            { name: 'K.K.', bio: 'Voice of love.' },
+            { name: 'Shaan', bio: 'Evergreen voice.' },
+            { name: 'Benny Dayal', bio: 'Funky voice.' },
+            { name: 'Neeti Mohan', bio: 'Pop star.' },
+            { name: 'Jonita Gandhi', bio: 'Versatile singer.' },
+            { name: 'Sanctuary', bio: 'Indie band.' }, // Placeholder for variety
+            { name: 'Prateek Kuhad', bio: 'Indie sensation.' },
+            { name: 'Ritviz', bio: 'Electronic fusion.' },
+            { name: 'Divine', bio: 'Gully Boy.' }
         ];
 
-        await Song.insertMany(songs);
+        const createdArtists = await Artist.insertMany(artistsData);
+        console.log('Artists seeded');
+
+        // Create 150 Songs
+        const genres = ['Bollywood', 'Pop', 'Indie', 'Classical', 'Rock', 'Hip-Hop'];
+        const moods = ['Happy', 'Sad', 'Romantic', 'Party', 'Chill', 'Devotional'];
+        const languages = ['Hindi', 'English', 'Punjabi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Bengali'];
+
+        for (let i = 0; i < 150; i++) {
+            const album = createdAlbums[Math.floor(Math.random() * createdAlbums.length)];
+            // Find artist of this album
+            const artistId = album.artist;
+
+            songsData.push({
+                title: `Song ${i + 1} - ${album.title}`,
+                duration: 180 + Math.floor(Math.random() * 120),
+                genre: genres[Math.floor(Math.random() * genres.length)],
+                mood: moods[Math.floor(Math.random() * moods.length)],
+                language: languages[Math.floor(Math.random() * languages.length)],
+                album: album._id,
+                artist: artistId,
+                popularity: Math.floor(Math.random() * 100)
+            });
+        }
+
+        await Song.insertMany(songsData);
+        console.log('Songs seeded');
 
         console.log('Database seeded successfully');
         process.exit();

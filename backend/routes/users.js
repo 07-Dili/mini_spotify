@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Song = require('../models/Song');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
@@ -26,6 +27,9 @@ router.post('/favorites/:songId', auth, async (req, res) => {
         if (!user.favorites.includes(req.params.songId)) {
             user.favorites.push(req.params.songId);
             await user.save();
+
+            // Increment popularity
+            await Song.findByIdAndUpdate(req.params.songId, { $inc: { popularity: 1 } });
         }
         res.json(user.favorites);
     } catch (err) {
@@ -37,8 +41,13 @@ router.post('/favorites/:songId', auth, async (req, res) => {
 router.delete('/favorites/:songId', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        user.favorites = user.favorites.filter(id => id.toString() !== req.params.songId);
-        await user.save();
+        if (user.favorites.includes(req.params.songId)) {
+            user.favorites = user.favorites.filter(id => id.toString() !== req.params.songId);
+            await user.save();
+
+            // Decrement popularity
+            await Song.findByIdAndUpdate(req.params.songId, { $inc: { popularity: -1 } });
+        }
         res.json(user.favorites);
     } catch (err) {
         res.status(500).json({ message: 'Error removing favorite', error: err.message });

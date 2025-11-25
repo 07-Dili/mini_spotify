@@ -20,26 +20,26 @@ const Login = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-900">
-            <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
-                <h2 className="text-2xl font-bold text-white mb-6 text-center">Login to Mini-Spotify</h2>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-96 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">Login</h2>
                 {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-gray-400 mb-2">Username</label>
+                        <label className="block text-gray-600 dark:text-gray-400 mb-2">Username or Email</label>
                         <input
                             type="text"
-                            className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             required
                         />
                     </div>
                     <div className="mb-6">
-                        <label className="block text-gray-400 mb-2">Password</label>
+                        <label className="block text-gray-600 dark:text-gray-400 mb-2">Password</label>
                         <input
                             type="password"
-                            className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -52,7 +52,7 @@ const Login = () => {
                         Login
                     </button>
                 </form>
-                <p className="mt-4 text-center text-gray-400">
+                <p className="mt-4 text-center text-gray-600 dark:text-gray-400">
                     Don't have an account? <Link to="/register" className="text-green-500 hover:underline">Register</Link>
                 </p>
             </div>

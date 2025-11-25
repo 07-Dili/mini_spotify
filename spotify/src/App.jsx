@@ -11,6 +11,10 @@ import ArtistDetail from './pages/ArtistDetail';
 import AlbumList from './pages/AlbumList';
 import AlbumDetail from './pages/AlbumDetail';
 
+import { ThemeProvider } from './context/ThemeContext';
+
+import AdminDashboard from './pages/AdminDashboard';
+
 const PrivateRoute = ({ children }) => {
   const { user, loading } = React.useContext(AuthContext);
   if (loading) return <div>Loading...</div>;
@@ -20,21 +24,24 @@ const PrivateRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-900 text-white">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-            <Route path="/favorites" element={<PrivateRoute><Favorites /></PrivateRoute>} />
-            <Route path="/recommendations" element={<PrivateRoute><Recommendations /></PrivateRoute>} />
-            <Route path="/artists" element={<PrivateRoute><ArtistList /></PrivateRoute>} />
-            <Route path="/artists/:id" element={<PrivateRoute><ArtistDetail /></PrivateRoute>} />
-            <Route path="/albums" element={<PrivateRoute><AlbumList /></PrivateRoute>} />
-            <Route path="/albums/:id" element={<PrivateRoute><AlbumDetail /></PrivateRoute>} />
-          </Routes>
-        </div>
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white pb-24 transition-colors duration-200">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+              <Route path="/favorites" element={<PrivateRoute><Favorites /></PrivateRoute>} />
+              <Route path="/recommendations" element={<PrivateRoute><Recommendations /></PrivateRoute>} />
+              <Route path="/artists" element={<PrivateRoute><ArtistList /></PrivateRoute>} />
+              <Route path="/artists/:id" element={<PrivateRoute><ArtistDetail /></PrivateRoute>} />
+              <Route path="/albums" element={<PrivateRoute><AlbumList /></PrivateRoute>} />
+              <Route path="/albums/:id" element={<PrivateRoute><AlbumDetail /></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+            </Routes>
+          </div>
+        </Router>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

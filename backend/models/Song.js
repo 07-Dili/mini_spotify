@@ -18,6 +18,10 @@ const songSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    language: {
+        type: String,
+        required: true
+    },
     album: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Album',
@@ -25,9 +29,16 @@ const songSchema = new mongoose.Schema({
     },
     artist: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Artist',
+        ref: 'Artist', // Added direct ref to Artist per spec
         required: true
+    },
+    popularity: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
+
+// Text index for search
+songSchema.index({ title: 'text', genre: 'text', mood: 'text' }, { language_override: 'dummy_language' });
 
 module.exports = mongoose.model('Song', songSchema);

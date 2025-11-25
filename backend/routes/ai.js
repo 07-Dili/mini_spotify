@@ -25,41 +25,73 @@ router.get('/recommendations', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).populate('favorites');
         const favorites = user.favorites;
-
-        if (favorites.length === 0) {
-            // If no favorites, return random songs
-            const randomSongs = await Song.aggregate([{ $sample: { size: 5 } }]);
-            // Populate artist and album for random songs
-            await Song.populate(randomSongs, { path: 'artist album' });
-            return res.json(randomSongs.map(song => ({ ...song.toObject(), reason: 'Popular on Mini-Spotify' })));
-        }
-
-        // Simple Content-Based Filtering: Recommend songs with same Genre or Mood
-        const genres = [...new Set(favorites.map(f => f.genre))];
-        const moods = [...new Set(favorites.map(f => f.mood))];
         const favoriteIds = favorites.map(f => f._id.toString());
 
-        const recommendations = await Song.find({
-            _id: { $nin: favoriteIds }, // Exclude songs already in favorites
-            $or: [
-                { genre: { $in: genres } },
-                { mood: { $in: moods } }
-            ]
-        })
-            .limit(5)
-            .populate('artist album');
+        // Collect Metadata from Favorites OR Preferences
+        let genres = favorites.map(f => f.genre);
+        let moods = favorites.map(f => f.mood);
+        let artistIds = favorites.map(f => f.artist.toString());
 
-        // Add reason
-        const result = recommendations.map(song => {
-            let reason = '';
-            if (genres.includes(song.genre)) reason = `Because you like ${song.genre}`;
-            else if (moods.includes(song.mood)) reason = `Because you like ${song.mood} music`;
-            else reason = 'Recommended for you';
+        // Cold Start: Use Preferences if no favorites
+        if (favorites.length === 0) {
+            if (user.preferredArtists && user.preferredArtists.length > 0) {
+                artistIds = [...user.preferredArtists.map(id => id.toString())];
+                // Fetch artist details to maybe get genres? For now, we rely on artist ID match.
+            }
+            // We don't have explicit genres from preferences unless we fetch artists. 
+            // But we can use languages if we had language metadata on songs. 
+            // For now, let's rely heavily on Artist match for cold start.
+        }
 
-            return { ...song.toObject(), reason };
+        // Fetch all candidate songs (excluding favorites)
+        // In a large DB, we would filter this query more. For "Mini-Spotify", fetching all is acceptable or limit to 100.
+        const candidates = await Song.find({ _id: { $nin: favoriteIds } }).populate('artist album');
+
+        // Calculate Max Popularity for normalization
+        const maxPopularity = Math.max(...candidates.map(s => s.popularity || 0), 1);
+
+        // Score Candidates
+        const scoredSongs = candidates.map(song => {
+            let score = 0;
+            let reasons = [];
+
+            // +3 if same artist
+            if (artistIds.includes(song.artist._id.toString())) {
+                score += 3;
+                reasons.push(`Same artist as your favorites`);
+            }
+
+            // +2 if same genre
+            if (genres.includes(song.genre)) {
+                score += 2;
+                reasons.push(`Matches genre '${song.genre}'`);
+            }
+
+            // +1 if same mood
+            if (moods.includes(song.mood)) {
+                score += 1;
+                reasons.push(`Matches mood '${song.mood}'`);
+            }
+
+            // +Popularity Normalized (0 to 1)
+            const popScore = (song.popularity || 0) / maxPopularity;
+            score += popScore;
+
+            // Construct reason string
+            let reasonStr = reasons.length > 0 ? reasons.join(', ') : 'Recommended for you';
+
+            return { ...song.toObject(), score, reason: reasonStr };
         });
 
-        res.json(result);
+        // Sort by Score DESC, then Popularity DESC
+        scoredSongs.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return (b.popularity || 0) - (a.popularity || 0);
+        });
+
+        // Return Top 5
+        res.json(scoredSongs.slice(0, 5));
+
     } catch (err) {
         res.status(500).json({ message: 'Error generating recommendations', error: err.message });
     }
