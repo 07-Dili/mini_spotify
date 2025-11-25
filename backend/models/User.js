@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema({
     preferredArtists: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Artist'
+    }],
+    searchHistory: [{
+        type: String
     }]
 }, { timestamps: true });
 

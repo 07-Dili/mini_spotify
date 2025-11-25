@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Song = require('../models/Song');
+const Artist = require('../models/Artist');
+const Album = require('../models/Album');
 const auth = require('../middleware/auth');
 
 // Create Song (Protected, Admin Only)
@@ -40,10 +42,10 @@ router.get('/top', async (req, res) => {
     }
 });
 
-// Get All Songs / Search
+// Get All Songs / Search (Paginated)
 router.get('/', async (req, res) => {
     try {
-        const { search, albumId } = req.query;
+        const { search, albumId, page = 1, limit = 10 } = req.query;
         let query = {};
 
         if (albumId) {
@@ -51,11 +53,44 @@ router.get('/', async (req, res) => {
         }
 
         if (search) {
-            query.$text = { $search: search };
+            // Find matching artists
+            const artists = await Artist.find({ name: { $regex: search, $options: 'i' } });
+            const artistIds = artists.map(a => a._id);
+
+            // Find matching albums
+            const albums = await Album.find({ title: { $regex: search, $options: 'i' } });
+            const albumIds = albums.map(a => a._id);
+
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { genre: { $regex: search, $options: 'i' } },
+                { artist: { $in: artistIds } },
+                { album: { $in: albumIds } }
+            ];
         }
 
-        const songs = await Song.find(query).populate('album').populate('artist');
-        res.json(songs);
+        // If page/limit are explicitly 'all', return everything (for dropdowns if needed, though usually we paginate)
+        // But here we will default to pagination. To get all, client can send limit=0 or large number.
+        // Let's support a specific 'all' flag or just rely on large limit.
+        // For Admin Dashboard dropdowns, we might need a separate endpoint or just use this one with large limit.
+
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        const songs = await Song.find(query)
+            .populate('album')
+            .populate('artist')
+            .limit(limitNum)
+            .skip((pageNum - 1) * limitNum);
+
+        const total = await Song.countDocuments(query);
+
+        res.json({
+            songs,
+            totalPages: Math.ceil(total / limitNum),
+            currentPage: pageNum,
+            totalSongs: total
+        });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching songs', error: err.message });
     }

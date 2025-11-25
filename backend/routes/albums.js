@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Album = require('../models/Album');
+const Song = require('../models/Song');
 const auth = require('../middleware/auth');
 
 // Create Album (Protected, Admin Only)
@@ -10,13 +11,13 @@ router.post('/', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admins only.' });
         }
 
-        const { title, artistId, release_year, cover_image } = req.body;
+        const { title, artistId, release_year, imageUrl, cover_image } = req.body;
 
         const album = new Album({
             title,
             artist: artistId,
             release_year,
-            imageUrl: cover_image
+            imageUrl: imageUrl || cover_image
         });
         await album.save();
         res.status(201).json(album);
@@ -25,13 +26,30 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// Get All Albums (optionally filter by artist)
+// Get All Albums (Paginated)
 router.get('/', async (req, res) => {
     try {
-        const { artistId } = req.query;
-        const query = artistId ? { artist: artistId } : {};
-        const albums = await Album.find(query).populate('artist');
-        res.json(albums);
+        const { artistId, page = 1, limit = 10, search = '' } = req.query;
+        const query = {};
+        if (artistId) query.artist = artistId;
+        if (search) query.title = { $regex: search, $options: 'i' };
+
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        const albums = await Album.find(query)
+            .populate('artist')
+            .limit(limitNum)
+            .skip((pageNum - 1) * limitNum);
+
+        const total = await Album.countDocuments(query);
+
+        res.json({
+            albums,
+            totalPages: Math.ceil(total / limitNum),
+            currentPage: pageNum,
+            totalAlbums: total
+        });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching albums', error: err.message });
     }
@@ -63,8 +81,16 @@ router.put('/:id', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
-        await Album.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Album deleted' });
+
+        const albumId = req.params.id;
+
+        // Delete all songs in this album
+        await Song.deleteMany({ album: albumId });
+
+        // Delete the album
+        await Album.findByIdAndDelete(albumId);
+
+        res.json({ message: 'Album and associated songs deleted' });
     } catch (err) {
         res.status(500).json({ message: 'Error deleting album', error: err.message });
     }

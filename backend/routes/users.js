@@ -57,13 +57,96 @@ router.delete('/favorites/:songId', auth, async (req, res) => {
 // Get Favorites
 router.get('/favorites', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).populate({
-            path: 'favorites',
-            populate: { path: 'artist album' }
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 15;
+        const skip = (page - 1) * limit;
+
+        const user = await User.findById(req.user.id);
+        const totalFavorites = user.favorites.length;
+        const totalPages = Math.ceil(totalFavorites / limit);
+
+        // Populate only the slice we need
+        // Since favorites is an array of IDs, we can slice it first then populate
+        const paginatedFavoritesIds = user.favorites.slice(skip, skip + limit);
+
+        const populatedUser = await User.findOne({ _id: req.user.id })
+            .populate({
+                path: 'favorites',
+                match: { _id: { $in: paginatedFavoritesIds } },
+                populate: { path: 'artist album' }
+            });
+
+        // Mongoose populate match might filter out items if not found, but we want to maintain order if possible.
+        // However, for favorites, simple population of the sliced IDs is usually enough.
+        // A better approach for array of ObjectIds:
+        const favorites = await Song.find({ _id: { $in: paginatedFavoritesIds } }).populate('artist album');
+
+        // Restore order if needed, but for now just returning the found songs is okay.
+
+        res.json({
+            favorites,
+            currentPage: page,
+            totalPages,
+            totalFavorites
         });
-        res.json(user.favorites);
     } catch (err) {
         res.status(500).json({ message: 'Error fetching favorites', error: err.message });
+    }
+});
+
+// Get Search History
+router.get('/history', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.json(user.searchHistory);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching history', error: err.message });
+    }
+});
+
+// Add to Search History
+router.post('/history', auth, async (req, res) => {
+    try {
+        const { query } = req.body;
+        if (!query) return res.status(400).json({ message: 'Query is required' });
+
+        const user = await User.findById(req.user.id);
+
+        // Remove duplicate if exists
+        user.searchHistory = user.searchHistory.filter(item => item !== query);
+
+        // Add to top
+        user.searchHistory.unshift(query);
+
+        // Keep max 5
+        if (user.searchHistory.length > 5) {
+            user.searchHistory = user.searchHistory.slice(0, 5);
+        }
+
+        await user.save();
+        res.json(user.searchHistory);
+    } catch (err) {
+        res.status(500).json({ message: 'Error updating history', error: err.message });
+    }
+});
+
+// Clear Search History
+// Clear Search History or Delete Specific Item
+router.delete('/history', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const { item } = req.query;
+
+        if (item) {
+            user.searchHistory = user.searchHistory.filter(h => h !== item);
+        } else {
+            user.searchHistory = [];
+        }
+
+        await user.save();
+        res.json(user.searchHistory);
+    } catch (err) {
+        res.status(500).json({ message: 'Error clearing history', error: err.message });
     }
 });
 

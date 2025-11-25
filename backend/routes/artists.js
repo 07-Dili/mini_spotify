@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Artist = require('../models/Artist');
+const Album = require('../models/Album');
+const Song = require('../models/Song');
 const auth = require('../middleware/auth');
 
 // Create Artist (Protected, Admin Only)
@@ -19,11 +21,27 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// Get All Artists
+// Get All Artists (Paginated)
 router.get('/', async (req, res) => {
     try {
-        const artists = await Artist.find();
-        res.json(artists);
+        const { page = 1, limit = 10, search = '' } = req.query;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        const query = search ? { name: { $regex: search, $options: 'i' } } : {};
+
+        const artists = await Artist.find(query)
+            .limit(limitNum)
+            .skip((pageNum - 1) * limitNum);
+
+        const total = await Artist.countDocuments(query);
+
+        res.json({
+            artists,
+            totalPages: Math.ceil(total / limitNum),
+            currentPage: pageNum,
+            totalArtists: total
+        });
     } catch (err) {
         res.status(500).json({ message: 'Error fetching artists', error: err.message });
     }
@@ -55,8 +73,23 @@ router.put('/:id', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
     try {
         if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
-        await Artist.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Artist deleted' });
+
+        const artistId = req.params.id;
+
+        // Find all albums by this artist
+        const albums = await Album.find({ artist: artistId });
+        const albumIds = albums.map(a => a._id);
+
+        // Delete all songs by this artist (using the direct artist reference)
+        await Song.deleteMany({ artist: artistId });
+
+        // Delete all albums by this artist
+        await Album.deleteMany({ artist: artistId });
+
+        // Delete the artist
+        await Artist.findByIdAndDelete(artistId);
+
+        res.json({ message: 'Artist and associated data deleted' });
     } catch (err) {
         res.status(500).json({ message: 'Error deleting artist', error: err.message });
     }

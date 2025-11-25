@@ -23,8 +23,8 @@ const Register = () => {
     useEffect(() => {
         const fetchArtists = async () => {
             try {
-                const res = await api.get('/artists');
-                setAvailableArtists(res.data);
+                const res = await api.get('/artists?limit=100');
+                setAvailableArtists(res.data.artists || []);
             } catch (err) {
                 console.error('Failed to fetch artists');
             }
@@ -63,6 +63,10 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (selectedArtists.length < 2) {
+            setError('Please select at least 2 artists.');
+            return;
+        }
         try {
             await register(username, email, password, selectedLanguages, selectedArtists);
             navigate('/login');

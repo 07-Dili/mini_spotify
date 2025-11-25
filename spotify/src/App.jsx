@@ -21,6 +21,9 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function App() {
   return (
     <AuthProvider>
@@ -39,6 +42,7 @@ function App() {
               <Route path="/albums/:id" element={<PrivateRoute><AlbumDetail /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
             </Routes>
+            <ToastContainer position="bottom-right" theme="colored" autoClose={1000} pauseOnHover={false} />
           </div>
         </Router>
       </ThemeProvider>
