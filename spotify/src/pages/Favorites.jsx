@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 
@@ -47,6 +48,8 @@ const Favorites = () => {
         }
     };
 
+    const navigate = useNavigate();
+
     return (
         <div className="min-h-screen">
             <Navbar />
@@ -79,7 +82,18 @@ const Favorites = () => {
                 ) : (
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
                         {favorites.map((song, index) => (
-                            <div key={song._id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition group border-b border-gray-100 dark:border-gray-700 last:border-0">
+                            <div
+                                key={song._id}
+                                onClick={() => {
+                                    if (song.album?._id) {
+                                        navigate(`/albums/${song.album._id}`);
+                                    } else {
+                                        // Alert if toast is not available, or just do nothing
+                                        alert('This song does not belong to an album.');
+                                    }
+                                }}
+                                className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition group border-b border-gray-100 dark:border-gray-700 last:border-0 cursor-pointer"
+                            >
                                 <div className="flex items-center gap-4">
                                     <span className="text-gray-400 w-6 text-right">{(page - 1) * limit + index + 1}</span>
                                     <div>
@@ -89,7 +103,7 @@ const Favorites = () => {
                                 </div>
                                 <div className="flex items-center gap-6">
                                     <button
-                                        onClick={() => removeFavorite(song._id)}
+                                        onClick={(e) => { e.stopPropagation(); removeFavorite(song._id); }}
                                         className="text-xl text-red-500 hover:text-gray-400"
                                     >
                                         ♥

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { toast } from 'react-toastify';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { useParams } from 'react-router-dom';
@@ -35,7 +36,11 @@ const AlbumDetail = () => {
     const fetchFavorites = async () => {
         try {
             const res = await api.get('/users/favorites');
-            setFavorites(res.data.map(f => f._id));
+            if (Array.isArray(res.data)) {
+                setFavorites(res.data.map(f => f._id));
+            } else {
+                setFavorites((res.data.favorites || []).map(f => f._id));
+            }
         } catch (err) {
             console.error('Error fetching favorites:', err);
         }
@@ -46,12 +51,15 @@ const AlbumDetail = () => {
             if (favorites.includes(songId)) {
                 await api.delete(`/users/favorites/${songId}`);
                 setFavorites(favorites.filter(id => id !== songId));
+                toast.info('Removed from favorites');
             } else {
                 await api.post(`/users/favorites/${songId}`);
                 setFavorites([...favorites, songId]);
+                toast.success('Added to favorites!');
             }
         } catch (err) {
             console.error('Error toggling favorite:', err);
+            toast.error('Failed to update favorite');
         }
     };
 

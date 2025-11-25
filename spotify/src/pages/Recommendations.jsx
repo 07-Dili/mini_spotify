@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
 
@@ -69,6 +70,8 @@ const Recommendations = () => {
         }
     };
 
+    const navigate = useNavigate();
+
     return (
         <div className="min-h-screen">
             <Navbar />
@@ -102,20 +105,37 @@ const Recommendations = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {recommendations.map(song => (
-                            <div key={song._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-lg dark:hover:bg-gray-750 transition border border-gray-200 dark:border-gray-700">
+                            <div
+                                key={song._id}
+                                onClick={() => {
+                                    if (song.album?._id) {
+                                        navigate(`/albums/${song.album._id}`);
+                                    } else {
+                                        alert('This song does not belong to an album.');
+                                    }
+                                }}
+                                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow hover:shadow-lg dark:hover:bg-gray-750 transition border border-gray-200 dark:border-gray-700 cursor-pointer"
+                            >
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{song.title}</h3>
                                         <p className="text-gray-500 dark:text-gray-400">{song.artist?.name}</p>
                                     </div>
                                     <button
-                                        onClick={() => toggleFavorite(song._id)}
+                                        onClick={(e) => { e.stopPropagation(); toggleFavorite(song._id); }}
                                         className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                                     >
                                         ♥
                                     </button>
                                 </div>
                                 <p className="text-sm text-gray-500 mt-2">{song.genre} • {song.mood}</p>
+                                {song.reason && (
+                                    <div className="mt-4 flex justify-end">
+                                        <span className="text-xs text-purple-500 dark:text-purple-400 italic bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded">
+                                            {song.reason}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

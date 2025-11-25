@@ -4,7 +4,7 @@ import api from '../api/axios';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../context/AuthContext';
 
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const Home = () => {
     const { user } = useContext(AuthContext);
@@ -116,6 +116,8 @@ const Home = () => {
         }
     };
 
+    const navigate = useNavigate();
+
     if (loading) return <div className="text-gray-900 dark:text-white p-8">Loading...</div>;
 
     return (
@@ -124,21 +126,31 @@ const Home = () => {
             <div className="container mx-auto p-8">
                 <h1 className="text-3xl font-bold mb-8">Welcome, {user.username}</h1>
 
-                {/* Search Section */}
-                {/* Search Section Removed - Moved to Navbar */}
-
                 {/* Top 10 Songs */}
                 <div className="mb-12">
                     <h2 className="text-2xl font-bold mb-4 text-green-600 dark:text-green-400">Top 10 Trending Songs</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {topSongs.map(song => (
-                            <div key={song._id} className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:shadow-lg dark:hover:bg-gray-700 transition flex justify-between items-center border border-gray-200 dark:border-gray-700">
+                            <div
+                                key={song._id}
+                                onClick={() => {
+                                    if (song.album?._id) {
+                                        navigate(`/albums/${song.album._id}`);
+                                    } else {
+                                        toast.info('This song does not belong to an album.');
+                                    }
+                                }}
+                                className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:shadow-lg dark:hover:bg-gray-700 transition flex justify-between items-center border border-gray-200 dark:border-gray-700 cursor-pointer"
+                            >
                                 <div>
                                     <h3 className="font-bold">{song.title}</h3>
                                     <p className="text-gray-600 dark:text-gray-400 text-sm">{song.artist?.name}</p>
                                     <p className="text-xs text-gray-500">🔥 {song.popularity} popularity</p>
                                 </div>
-                                <button onClick={() => toggleFavorite(song._id)} className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); toggleFavorite(song._id); }}
+                                    className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                >
                                     ♥
                                 </button>
                             </div>
@@ -151,13 +163,26 @@ const Home = () => {
                     <h2 className="text-2xl font-bold mb-4 text-purple-600 dark:text-purple-400">Recommended for You</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {recommendations.map(song => (
-                            <div key={song._id} className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:shadow-lg dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700">
+                            <div
+                                key={song._id}
+                                onClick={() => {
+                                    if (song.album?._id) {
+                                        navigate(`/albums/${song.album._id}`);
+                                    } else {
+                                        toast.info('This song does not belong to an album.');
+                                    }
+                                }}
+                                className="bg-white dark:bg-gray-800 p-4 rounded shadow hover:shadow-lg dark:hover:bg-gray-700 transition border border-gray-200 dark:border-gray-700 cursor-pointer"
+                            >
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <h3 className="font-bold">{song.title}</h3>
                                         <p className="text-gray-600 dark:text-gray-400 text-sm">{song.artist?.name}</p>
                                     </div>
-                                    <button onClick={() => toggleFavorite(song._id)} className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); toggleFavorite(song._id); }}
+                                        className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                    >
                                         ♥
                                     </button>
                                 </div>
@@ -194,7 +219,17 @@ const Home = () => {
                             <p className="text-gray-500 text-center py-4">No results found.</p>
                         ) : (
                             songs.map(song => (
-                                <div key={song._id} className="bg-white dark:bg-gray-800 p-3 rounded flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700">
+                                <div
+                                    key={song._id}
+                                    onClick={() => {
+                                        if (song.album?._id) {
+                                            navigate(`/albums/${song.album._id}`);
+                                        } else {
+                                            toast.info('This song does not belong to an album.');
+                                        }
+                                    }}
+                                    className="bg-white dark:bg-gray-800 p-3 rounded flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 border border-gray-200 dark:border-gray-700 cursor-pointer"
+                                >
                                     <div className="flex items-center">
                                         <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded mr-4 flex items-center justify-center text-xs text-gray-600 dark:text-gray-300">IMG</div>
                                         <div>
@@ -204,7 +239,10 @@ const Home = () => {
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <span className="text-xs text-gray-500">{Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}</span>
-                                        <button onClick={() => toggleFavorite(song._id)} className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); toggleFavorite(song._id); }}
+                                            className={`text-xl ${favorites.includes(song._id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                        >
                                             ♥
                                         </button>
                                     </div>

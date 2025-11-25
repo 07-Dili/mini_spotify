@@ -16,11 +16,25 @@ const Navbar = () => {
     const [showHistory, setShowHistory] = useState(false);
 
     const debounceTimeout = React.useRef(null);
+    const searchRef = React.useRef(null);
     const isFirstRender = React.useRef(true);
 
     React.useEffect(() => {
         if (user) fetchHistory();
     }, [user]);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowHistory(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Debounce Search
     React.useEffect(() => {
@@ -108,7 +122,7 @@ const Navbar = () => {
 
             {user && (
                 <>
-                    <div className="flex-1 max-w-xl relative mx-4">
+                    <div className="flex-1 max-w-xl relative mx-4" ref={searchRef}>
                         <form onSubmit={handleSearch} className="relative">
                             <input
                                 type="text"
@@ -122,7 +136,6 @@ const Navbar = () => {
                                     }
                                 }}
                                 onFocus={() => setShowHistory(true)}
-                                onBlur={() => setTimeout(() => setShowHistory(false), 200)} // Delay to allow clicking items
                             />
                             <button type="submit" className="absolute right-3 top-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white">
                                 🔍
