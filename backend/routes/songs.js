@@ -45,7 +45,7 @@ router.get('/top', async (req, res) => {
 // Get All Songs / Search (Paginated)
 router.get('/', async (req, res) => {
     try {
-        const { search, albumId, page = 1, limit = 10 } = req.query;
+        const { search, albumId, page = 1, limit = 16 } = req.query;
         let query = {};
 
         if (albumId) {
@@ -69,10 +69,7 @@ router.get('/', async (req, res) => {
             ];
         }
 
-        // If page/limit are explicitly 'all', return everything (for dropdowns if needed, though usually we paginate)
-        // But here we will default to pagination. To get all, client can send limit=0 or large number.
-        // Let's support a specific 'all' flag or just rely on large limit.
-        // For Admin Dashboard dropdowns, we might need a separate endpoint or just use this one with large limit.
+        // Pagination logic (use large limit for 'all' results)
 
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);

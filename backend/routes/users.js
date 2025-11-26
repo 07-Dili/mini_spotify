@@ -54,7 +54,17 @@ router.delete('/favorites/:songId', auth, async (req, res) => {
     }
 });
 
-// Get Favorites
+// Get All Favorite IDs (for checking status)
+router.get('/favorites/ids', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('favorites');
+        res.json(user.favorites);
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching favorite IDs', error: err.message });
+    }
+});
+
+// Get Favorites (Paginated with details)
 router.get('/favorites', auth, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -65,8 +75,7 @@ router.get('/favorites', auth, async (req, res) => {
         const totalFavorites = user.favorites.length;
         const totalPages = Math.ceil(totalFavorites / limit);
 
-        // Populate only the slice we need
-        // Since favorites is an array of IDs, we can slice it first then populate
+        // Slice favorites array for pagination
         const paginatedFavoritesIds = user.favorites.slice(skip, skip + limit);
 
         const populatedUser = await User.findOne({ _id: req.user.id })
@@ -76,12 +85,8 @@ router.get('/favorites', auth, async (req, res) => {
                 populate: { path: 'artist album' }
             });
 
-        // Mongoose populate match might filter out items if not found, but we want to maintain order if possible.
-        // However, for favorites, simple population of the sliced IDs is usually enough.
-        // A better approach for array of ObjectIds:
+        // Fetch populated songs for the current page
         const favorites = await Song.find({ _id: { $in: paginatedFavoritesIds } }).populate('artist album');
-
-        // Restore order if needed, but for now just returning the found songs is okay.
 
         res.json({
             favorites,

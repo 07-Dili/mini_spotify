@@ -34,8 +34,7 @@ const AdminDashboard = () => {
             else if (activeTab === 'songs') res = await api.get(`/songs?page=${page}&limit=${limit}`);
 
             if (res.data) {
-                // Backend returns { artists: [], totalPages: ... } etc.
-                // We need to normalize this
+                // Normalize backend response structure
                 const dataKey = activeTab; // 'artists', 'albums', 'songs'
                 setListData(res.data[dataKey]);
                 setTotalPages(res.data.totalPages);
@@ -49,8 +48,8 @@ const AdminDashboard = () => {
         // Only needed for forms
         try {
             const [artistsRes, albumsRes] = await Promise.all([
-                api.get('/artists?limit=1000'), // Fetch all (or many) for dropdowns
-                api.get('/albums?limit=1000')
+                api.get('/artists?limit=15'), // Fetch all (or many) for dropdowns
+                api.get('/albums?limit=15')
             ]);
             setAllArtists(artistsRes.data.artists);
             setAllAlbums(albumsRes.data.albums);

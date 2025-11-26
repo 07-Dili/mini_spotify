@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
@@ -36,21 +37,8 @@ const Recommendations = () => {
 
     const fetchFavorites = async () => {
         try {
-            const res = await api.get('/users/favorites');
-            // Handle pagination if favorites endpoint is called without params (it might return paginated now)
-            // But for just checking IDs, we might need a different endpoint or fetch all.
-            // For now, let's assume the user doesn't have thousands of favorites for this check, 
-            // OR we rely on the paginated response if that's what we get.
-            // Actually, we updated /favorites to be paginated. So this call will return page 1.
-            // To check if a song is favorited, we ideally need the full list or check individually.
-            // For simplicity in this "Mini-Spotify", we'll just use the first page or what we get.
-            // A better way would be a specific "check-favorites" endpoint or sending IDs to check.
-            // Let's just use what we get for now, acknowledging limitation.
-            if (res.data.favorites) {
-                setFavorites(res.data.favorites.map(f => f._id));
-            } else if (Array.isArray(res.data)) {
-                setFavorites(res.data.map(f => f._id));
-            }
+            const res = await api.get('/users/favorites/ids');
+            setFavorites(res.data);
         } catch (err) {
             console.error('Error fetching favorites', err);
         }
@@ -61,12 +49,15 @@ const Recommendations = () => {
             if (favorites.includes(songId)) {
                 await api.delete(`/users/favorites/${songId}`);
                 setFavorites(favorites.filter(id => id !== songId));
+                toast.info('Removed from favorites');
             } else {
                 await api.post(`/users/favorites/${songId}`);
                 setFavorites([...favorites, songId]);
+                toast.success('Added to favorites!');
             }
         } catch (err) {
             console.error('Error toggling favorite', err);
+            toast.error('Failed to update favorite');
         }
     };
 

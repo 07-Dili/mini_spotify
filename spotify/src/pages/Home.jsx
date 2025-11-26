@@ -57,13 +57,8 @@ const Home = () => {
 
     const fetchFavorites = async () => {
         try {
-            const res = await api.get('/users/favorites');
-            // Handle favorites response (array or object)
-            if (Array.isArray(res.data)) {
-                setFavorites(res.data.map(f => f._id));
-            } else {
-                setFavorites((res.data.favorites || []).map(f => f._id));
-            }
+            const res = await api.get('/users/favorites/ids');
+            setFavorites(res.data);
         } catch (err) {
             console.error('Error fetching favorites', err);
         }

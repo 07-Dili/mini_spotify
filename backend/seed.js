@@ -160,7 +160,7 @@ const musicData = [
     {
         name: 'Anirudh Ravichander',
         bio: 'Indian film composer and singer, known for his work in Tamil cinema.',
-        imageUrl: 'https://image.tmdb.org/t/p/original/r09QhD7lH2Wq19q2mE5e5B5C1Wz.jpg',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e1/Anirudh_Ravichander_at_Audio_Launch_of_Remo.jpg',
         albums: [
             {
                 title: '3',

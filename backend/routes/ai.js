@@ -27,7 +27,7 @@ router.get('/recommendations', auth, async (req, res) => {
         const favorites = user.favorites || [];
         const favoriteIds = favorites.map(f => f._id.toString());
 
-        // 1. Gather User Signals
+        // Gather user preferences and favorites
         const preferredArtistIds = (user.preferredArtists || []).map(id => id.toString());
         const preferredLanguages = user.preferredLanguages || [];
 
@@ -35,14 +35,13 @@ router.get('/recommendations', auth, async (req, res) => {
         const favGenres = favorites.map(f => f.genre);
         const favMoods = favorites.map(f => f.mood);
 
-        // Combine signals (Favorites > Preferences)
+        // Merge favorite and preferred artists
         const targetArtistIds = [...new Set([...favArtistIds, ...preferredArtistIds])];
 
-        // 2. Build Query
-        // Exclude songs already in favorites
+        // Build query excluding existing favorites
         let query = { _id: { $nin: favoriteIds } };
 
-        // We want to fetch a broad set of candidates to score
+        // Fetch candidates for scoring
         const orConditions = [];
 
         if (targetArtistIds.length > 0) {
@@ -61,28 +60,27 @@ router.get('/recommendations', auth, async (req, res) => {
             orConditions.push({ mood: { $in: favMoods } });
         }
 
-        // If we have signals, use them. Otherwise, we'll fall through to fallback.
+        // Apply filters if signals exist
         if (orConditions.length > 0) {
             query.$or = orConditions;
         }
 
-        // Fetch Candidates (limit to 100 to avoid performance hit)
+        // Fetch up to 50 candidates
         let candidates = await Song.find(query)
             .populate('artist album')
-            .limit(100);
+            .limit(50);
 
-        // 3. Fallback if not enough candidates
-        // We need at least 7 recommendations
-        if (candidates.length < 10) {
+        // Fill with popular songs if under 7 candidates
+        if (candidates.length < 7) {
             const existingIds = [...favoriteIds, ...candidates.map(c => c._id.toString())];
             const fallbackSongs = await Song.find({ _id: { $nin: existingIds } })
                 .sort({ popularity: -1 })
-                .limit(20)
+                .limit(7)
                 .populate('artist album');
             candidates = [...candidates, ...fallbackSongs];
         }
 
-        // 4. Scoring Algorithm
+        // Score candidates based on relevance
         const maxPopularity = Math.max(...candidates.map(s => s.popularity || 0), 1);
 
         const scoredSongs = candidates.map(song => {
@@ -94,7 +92,7 @@ router.get('/recommendations', auth, async (req, res) => {
             const songGenre = song.genre;
             const songMood = song.mood;
 
-            // A. Favorites Match (Highest Priority)
+            // High priority: Matches favorites
             if (favArtistIds.includes(songArtistId)) {
                 score += 5;
                 reasons.push('Similar to your favorite artists');
@@ -108,7 +106,7 @@ router.get('/recommendations', auth, async (req, res) => {
                 reasons.push(`Matches your mood`);
             }
 
-            // B. Registration Preferences (Medium Priority)
+            // Medium priority: Matches registration prefs
             if (preferredArtistIds.includes(songArtistId) && !favArtistIds.includes(songArtistId)) {
                 score += 4;
                 reasons.push('From your selected artists');
@@ -118,7 +116,7 @@ router.get('/recommendations', auth, async (req, res) => {
                 reasons.push(`In ${songLanguage}`);
             }
 
-            // C. Popularity (Tie-breaker)
+            // Low priority: Popularity tie-breaker
             const popScore = (song.popularity || 0) / maxPopularity; // 0 to 1
             score += popScore;
 
@@ -129,7 +127,7 @@ router.get('/recommendations', auth, async (req, res) => {
             return { ...song.toObject(), score, reason: reasonStr };
         });
 
-        // 5. Sort and Paginate
+        // Sort by score and paginate
         scoredSongs.sort((a, b) => b.score - a.score);
 
         // Remove duplicates

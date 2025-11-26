@@ -23,7 +23,7 @@ const Register = () => {
     useEffect(() => {
         const fetchArtists = async () => {
             try {
-                const res = await api.get('/artists?limit=100');
+                const res = await api.get('/artists?limit=20');
                 setAvailableArtists(res.data.artists || []);
             } catch (err) {
                 console.error('Failed to fetch artists');
