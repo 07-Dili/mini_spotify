@@ -22,6 +22,7 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
             <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-96 border border-gray-200 dark:border-gray-700">
+                <h1 className="text-3xl font-bold mb-2 text-center text-green-600 dark:text-green-400">Welcome back to Spotify</h1>
                 <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">Login</h2>
                 {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
                 <form onSubmit={handleSubmit}>
