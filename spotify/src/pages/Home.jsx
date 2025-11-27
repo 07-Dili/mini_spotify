@@ -113,6 +113,14 @@ const Home = () => {
 
     const navigate = useNavigate();
 
+    const resultsRef = React.useRef(null);
+
+    useEffect(() => {
+        if (search && resultsRef.current) {
+            resultsRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [search, songs]); // Scroll when search changes or results load
+
     if (loading) return <div className="text-gray-900 dark:text-white p-8">Loading...</div>;
 
     return (
@@ -188,7 +196,7 @@ const Home = () => {
                 </div>
 
                 {/* All Songs List */}
-                <div>
+                <div ref={resultsRef}>
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-2xl font-bold">All Songs</h2>
                         <div className="flex space-x-2">
