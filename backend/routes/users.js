@@ -2,23 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Song = require('../models/Song');
-const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
-
-// Middleware to authenticate user
-const auth = async (req, res, next) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ message: 'No token provided' });
-
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
-        next();
-    } catch (err) {
-        res.status(401).json({ message: 'Invalid token' });
-    }
-};
+const auth = require('../middleware/auth');
 
 // Add to Favorites
 router.post('/favorites/:songId', auth, async (req, res) => {
