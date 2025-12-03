@@ -1,10 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const Artist = require('../models/Artist');
-const Album = require('../models/Album');
-const Song = require('../models/Song');
-const auth = require('../middleware/auth');
+import express from 'express';
+import Artist from '../models/Artist.js';
+import Album from '../models/Album.js';
+import Song from '../models/Song.js';
+import auth from '../middleware/auth.js';
 
+const router = express.Router();
 // Create Artist (Protected, Admin Only)
 router.post('/', auth, async (req, res) => {
     try {
@@ -95,4 +95,4 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

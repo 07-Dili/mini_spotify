@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
+import Loading from '../components/Loading';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('artists');
@@ -15,6 +16,7 @@ const AdminDashboard = () => {
     const [listData, setListData] = useState([]); // Paginated data for list view
     const [allArtists, setAllArtists] = useState([]); // All artists for dropdowns
     const [allAlbums, setAllAlbums] = useState([]); // All albums for dropdowns
+    const [loading, setLoading] = useState(true);
 
     // Form States
     const [artistForm, setArtistForm] = useState({ name: '', bio: '', imageUrl: '' });
@@ -27,6 +29,7 @@ const AdminDashboard = () => {
     }, [activeTab, page]);
 
     const fetchListData = async () => {
+        setLoading(true);
         try {
             let res;
             if (activeTab === 'artists') res = await api.get(`/artists?page=${page}&limit=${limit}`);
@@ -41,6 +44,8 @@ const AdminDashboard = () => {
             }
         } catch (err) {
             console.error('Error fetching list data', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -221,30 +226,34 @@ const AdminDashboard = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            {activeTab === 'artists' && listData.map(item => (
-                                <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
-                                    <span>{item.name}</span>
-                                    <button onClick={() => handleDeleteArtist(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
-                                </div>
-                            ))}
+                        {loading ? (
+                            <Loading />
+                        ) : (
+                            <div className="space-y-2">
+                                {activeTab === 'artists' && listData.map(item => (
+                                    <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
+                                        <span>{item.name}</span>
+                                        <button onClick={() => handleDeleteArtist(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                    </div>
+                                ))}
 
-                            {activeTab === 'albums' && listData.map(item => (
-                                <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
-                                    <span>{item.title} ({item.artist?.name})</span>
-                                    <button onClick={() => handleDeleteAlbum(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
-                                </div>
-                            ))}
+                                {activeTab === 'albums' && listData.map(item => (
+                                    <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
+                                        <span>{item.title} ({item.artist?.name})</span>
+                                        <button onClick={() => handleDeleteAlbum(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                    </div>
+                                ))}
 
-                            {activeTab === 'songs' && listData.map(item => (
-                                <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
-                                    <span>{item.title} - {item.artist?.name}</span>
-                                    <button onClick={() => handleDeleteSong(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
-                                </div>
-                            ))}
+                                {activeTab === 'songs' && listData.map(item => (
+                                    <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
+                                        <span>{item.title} - {item.artist?.name}</span>
+                                        <button onClick={() => handleDeleteSong(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                    </div>
+                                ))}
 
-                            {listData.length === 0 && <p className="text-gray-500 text-center py-4">No data found.</p>}
-                        </div>
+                                {listData.length === 0 && <p className="text-gray-500 text-center py-4">No data found.</p>}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

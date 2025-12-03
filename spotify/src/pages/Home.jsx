@@ -2,8 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
+import Loading from '../components/Loading';
 import { AuthContext } from '../context/AuthContext';
-
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const Home = () => {
@@ -11,7 +11,6 @@ const Home = () => {
     const [songs, setSongs] = useState([]);
     const [topSongs, setTopSongs] = useState([]);
     const [recommendations, setRecommendations] = useState([]);
-    // const [search, setSearch] = useState(''); // Removed local state
     const [loading, setLoading] = useState(true);
 
     const [searchParams] = useSearchParams();
@@ -32,6 +31,7 @@ const Home = () => {
 
     const fetchData = async () => {
         try {
+            setLoading(true);
             const [songsRes, topRes] = await Promise.all([
                 api.get(`/songs?search=${search}&page=${page}&limit=${limit}`),
                 api.get('/songs/top')
@@ -41,7 +41,7 @@ const Home = () => {
             setTopSongs(topRes.data);
 
             // Fetch recommendations separately
-            fetchRecommendations();
+            await fetchRecommendations();
         } catch (err) {
             console.error('Error fetching data', err);
         } finally {
@@ -121,7 +121,12 @@ const Home = () => {
         }
     }, [search, songs]); // Scroll when search changes or results load
 
-    if (loading) return <div className="text-gray-900 dark:text-white p-8">Loading...</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+            <Navbar />
+            <Loading />
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">

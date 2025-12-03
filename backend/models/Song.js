@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const songSchema = new mongoose.Schema({
     title: {
@@ -41,4 +41,4 @@ const songSchema = new mongoose.Schema({
 // Text index for search
 songSchema.index({ title: 'text', genre: 'text', mood: 'text' }, { language_override: 'dummy_language' });
 
-module.exports = mongoose.model('Song', songSchema);
+export default mongoose.model('Song', songSchema);

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
+import Loading from '../components/Loading';
 
 const Favorites = () => {
     const [favorites, setFavorites] = useState([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(true);
     const limit = 16;
 
     useEffect(() => {
@@ -15,6 +17,7 @@ const Favorites = () => {
 
     const fetchFavorites = async () => {
         try {
+            setLoading(true);
             const res = await api.get(`/users/favorites?page=${page}&limit=${limit}`);
             if (Array.isArray(res.data)) {
                 setFavorites(res.data);
@@ -30,6 +33,8 @@ const Favorites = () => {
             }
         } catch (err) {
             console.error('Error fetching favorites:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -50,8 +55,15 @@ const Favorites = () => {
 
     const navigate = useNavigate();
 
+    if (loading) return (
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+            <Navbar />
+            <Loading />
+        </div>
+    );
+
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
             <Navbar />
             <div className="container mx-auto p-8">
                 <div className="flex justify-between items-center mb-8">

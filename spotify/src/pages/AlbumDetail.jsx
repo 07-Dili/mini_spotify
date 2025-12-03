@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import Navbar from '../components/Navbar';
+import Loading from '../components/Loading';
 import { useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
@@ -10,6 +11,7 @@ const AlbumDetail = () => {
     const [album, setAlbum] = useState(null);
     const [songs, setSongs] = useState([]);
     const [favorites, setFavorites] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // Pagination for Songs
     const [page, setPage] = useState(1);
@@ -18,6 +20,7 @@ const AlbumDetail = () => {
 
     useEffect(() => {
         const fetchAlbumData = async () => {
+            setLoading(true);
             try {
                 const albumRes = await api.get(`/albums/${id}`);
                 setAlbum(albumRes.data);
@@ -27,6 +30,8 @@ const AlbumDetail = () => {
                 setTotalPages(songsRes.data.totalPages || 1);
             } catch (err) {
                 console.error('Error fetching album data:', err);
+            } finally {
+                setLoading(false);
             }
         };
         fetchAlbumData();
@@ -59,10 +64,22 @@ const AlbumDetail = () => {
         }
     };
 
-    if (!album) return <div className="p-8">Loading...</div>;
+    if (loading) return (
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+            <Navbar />
+            <Loading />
+        </div>
+    );
+
+    if (!album) return (
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+            <Navbar />
+            <div className="p-8 text-center text-gray-500">Album not found.</div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
             <Navbar />
             <div className="container mx-auto p-8">
                 <div className="flex flex-col md:flex-row items-center md:items-end mb-12 gap-8">

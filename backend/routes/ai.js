@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
-const Song = require('../models/Song');
-const auth = require('../middleware/auth');
+import express from 'express';
+import User from '../models/User.js';
+import Song from '../models/Song.js';
+import auth from '../middleware/auth.js';
 
+const router = express.Router();
 // Get Recommendations
 router.get('/recommendations', auth, async (req, res) => {
     try {
@@ -139,4 +139,4 @@ router.get('/recommendations', auth, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

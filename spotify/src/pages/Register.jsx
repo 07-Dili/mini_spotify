@@ -88,7 +88,7 @@ const Register = () => {
                 {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
                 {step === 1 && (
-                    <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
+                    <form onSubmit={(e) => { e.preventDefault(); handleNext(); }}>
                         <div className="mb-4">
                             <label className="block text-gray-600 dark:text-gray-400 mb-2">Username</label>
                             <input
@@ -117,6 +117,8 @@ const Register = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                minLength={5}
+                                title="Password must be at least 5 characters long"
                             />
                         </div>
                         <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition duration-200">

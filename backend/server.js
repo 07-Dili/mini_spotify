@@ -1,7 +1,14 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+import authRoutes from './routes/auth.js';
+import artistRoutes from './routes/artists.js';
+import albumRoutes from './routes/albums.js';
+import songRoutes from './routes/songs.js';
+import userRoutes from './routes/users.js';
+import aiRoutes from './routes/ai.js';
 
 dotenv.config();
 
@@ -18,12 +25,6 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Routes
-const authRoutes = require('./routes/auth');
-const artistRoutes = require('./routes/artists');
-const albumRoutes = require('./routes/albums');
-const songRoutes = require('./routes/songs');
-const userRoutes = require('./routes/users');
-const aiRoutes = require('./routes/ai');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/artists', artistRoutes);

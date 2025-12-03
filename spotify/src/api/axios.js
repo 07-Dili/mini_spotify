@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://mini-spotify-2dtb.onrender.com/api',
+    baseURL: 'http://localhost:5000/api',
 });
 
 // Add a request interceptor to include the token
@@ -12,7 +12,7 @@ api.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
-    },
+    },  
     (error) => Promise.reject(error)
 );
 

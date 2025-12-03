@@ -1,16 +1,19 @@
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
+const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password, role, languages, artistIds } = req.body;
         if (!username || !email || !password) {
             return res.status(400).json({ message: 'Username, email, and password are required' });
+        }
+        if (password.length < 5) {
+            return res.status(400).json({ message: 'Password must be at least 5 characters long' });
         }
 
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
@@ -76,4 +79,4 @@ router.get('/me', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
