@@ -18,6 +18,8 @@ const AdminDashboard = () => {
     const [allAlbums, setAllAlbums] = useState([]); // All albums for dropdowns
     const [loading, setLoading] = useState(true);
 
+    const [editingId, setEditingId] = useState(null);
+
     // Form States
     const [artistForm, setArtistForm] = useState({ name: '', bio: '', imageUrl: '' });
     const [albumForm, setAlbumForm] = useState({ title: '', artistId: '', release_year: '', imageUrl: '' });
@@ -63,41 +65,82 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleCreateArtist = async (e) => {
-        e.preventDefault();
-        try {
-            await api.post('/artists', artistForm);
-            toast.success('Artist created successfully');
-            setArtistForm({ name: '', bio: '', imageUrl: '' });
-            fetchListData();
-            fetchDropdownData();
-        } catch (err) {
-            toast.error('Failed to create artist');
+    const handleEdit = (item) => {
+        setEditingId(item._id);
+        if (activeTab === 'artists') {
+            setArtistForm({ name: item.name, bio: item.bio || '', imageUrl: item.imageUrl || '' });
+        } else if (activeTab === 'albums') {
+            setAlbumForm({ title: item.title, artistId: item.artist?._id || item.artist, release_year: item.release_year || '', imageUrl: item.imageUrl || '' });
+        } else if (activeTab === 'songs') {
+            setSongForm({
+                title: item.title,
+                duration: item.duration,
+                genre: item.genre,
+                mood: item.mood,
+                language: item.language,
+                albumId: item.album?._id || item.album,
+                artistId: item.artist?._id || item.artist
+            });
         }
     };
 
-    const handleCreateAlbum = async (e) => {
+    const resetForm = () => {
+        setEditingId(null);
+        setArtistForm({ name: '', bio: '', imageUrl: '' });
+        setAlbumForm({ title: '', artistId: '', release_year: '', imageUrl: '' });
+        setSongForm({ title: '', duration: '', genre: '', mood: '', language: '', albumId: '', artistId: '' });
+    };
+
+    const handleSubmitArtist = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/albums', albumForm);
-            toast.success('Album created successfully');
-            setAlbumForm({ title: '', artistId: '', release_year: '', imageUrl: '' });
+            if (editingId) {
+                await api.put(`/artists/${editingId}`, artistForm);
+                toast.success('Artist updated successfully');
+            } else {
+                await api.post('/artists', artistForm);
+                toast.success('Artist created successfully');
+            }
+            resetForm();
             fetchListData();
             fetchDropdownData();
         } catch (err) {
-            toast.error('Failed to create album');
+            toast.error(editingId ? 'Failed to update artist' : 'Failed to create artist');
         }
     };
 
-    const handleCreateSong = async (e) => {
+    const handleSubmitAlbum = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/songs', songForm);
-            toast.success('Song created successfully');
-            setSongForm({ title: '', duration: '', genre: '', mood: '', language: '', albumId: '', artistId: '' });
+            if (editingId) {
+                await api.put(`/albums/${editingId}`, albumForm);
+                toast.success('Album updated successfully');
+            } else {
+                await api.post('/albums', albumForm);
+                toast.success('Album created successfully');
+            }
+            resetForm();
+            fetchListData();
+            fetchDropdownData();
+        } catch (err) {
+            toast.error(editingId ? 'Failed to update album' : 'Failed to create album');
+        }
+    };
+
+    const handleSubmitSong = async (e) => {
+        e.preventDefault();
+        try {
+            if (editingId) {
+                await api.put(`/songs/${editingId}`, songForm);
+                toast.success('Song updated successfully');
+            } else {
+                await api.post('/songs', songForm);
+                toast.success('Song created successfully');
+            }
+            resetForm();
             fetchListData();
         } catch (err) {
-            toast.error('Failed to create song');
+            toast.error(editingId ? 'Failed to update song' : 'Failed to create song');
         }
     };
 
@@ -148,7 +191,7 @@ const AdminDashboard = () => {
                         <button
                             key={tab}
                             className={`px-4 py-2 rounded ${activeTab === tab ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-800'}`}
-                            onClick={() => { setActiveTab(tab); setPage(1); }}
+                            onClick={() => { setActiveTab(tab); setPage(1); resetForm(); }}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
                         </button>
@@ -159,19 +202,22 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Form Section */}
                     <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-6 rounded shadow h-fit">
-                        <h2 className="text-xl font-bold mb-4">Create New</h2>
+                        <h2 className="text-xl font-bold mb-4">{editingId ? `Edit ${activeTab.slice(0, -1)}` : 'Create New'}</h2>
 
                         {activeTab === 'artists' && (
-                            <form onSubmit={handleCreateArtist} className="space-y-4">
+                            <form onSubmit={handleSubmitArtist} className="space-y-4">
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Name" value={artistForm.name} onChange={e => setArtistForm({ ...artistForm, name: e.target.value })} required />
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Bio" value={artistForm.bio} onChange={e => setArtistForm({ ...artistForm, bio: e.target.value })} />
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Image URL" value={artistForm.imageUrl} onChange={e => setArtistForm({ ...artistForm, imageUrl: e.target.value })} />
-                                <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Create Artist</button>
+                                <div className="flex space-x-2">
+                                    <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">{editingId ? 'Update' : 'Create'} Artist</button>
+                                    {editingId && <button type="button" onClick={resetForm} className="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Cancel</button>}
+                                </div>
                             </form>
                         )}
 
                         {activeTab === 'albums' && (
-                            <form onSubmit={handleCreateAlbum} className="space-y-4">
+                            <form onSubmit={handleSubmitAlbum} className="space-y-4">
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Title" value={albumForm.title} onChange={e => setAlbumForm({ ...albumForm, title: e.target.value })} required />
                                 <select className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" value={albumForm.artistId} onChange={e => setAlbumForm({ ...albumForm, artistId: e.target.value })} required>
                                     <option value="">Select Artist</option>
@@ -179,12 +225,15 @@ const AdminDashboard = () => {
                                 </select>
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Year" type="number" value={albumForm.release_year} onChange={e => setAlbumForm({ ...albumForm, release_year: e.target.value })} />
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Cover Image URL" value={albumForm.imageUrl} onChange={e => setAlbumForm({ ...albumForm, imageUrl: e.target.value })} />
-                                <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Create Album</button>
+                                <div className="flex space-x-2">
+                                    <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">{editingId ? 'Update' : 'Create'} Album</button>
+                                    {editingId && <button type="button" onClick={resetForm} className="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Cancel</button>}
+                                </div>
                             </form>
                         )}
 
                         {activeTab === 'songs' && (
-                            <form onSubmit={handleCreateSong} className="space-y-4">
+                            <form onSubmit={handleSubmitSong} className="space-y-4">
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Title" value={songForm.title} onChange={e => setSongForm({ ...songForm, title: e.target.value })} required />
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Duration (sec)" type="number" value={songForm.duration} onChange={e => setSongForm({ ...songForm, duration: e.target.value })} required />
                                 <input className="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" placeholder="Genre" value={songForm.genre} onChange={e => setSongForm({ ...songForm, genre: e.target.value })} required />
@@ -198,7 +247,10 @@ const AdminDashboard = () => {
                                     <option value="">Select Album</option>
                                     {allAlbums.filter(a => !songForm.artistId || a.artist._id === songForm.artistId).map(a => <option key={a._id} value={a._id}>{a.title}</option>)}
                                 </select>
-                                <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Create Song</button>
+                                <div className="flex space-x-2">
+                                    <button type="submit" className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">{editingId ? 'Update' : 'Create'} Song</button>
+                                    {editingId && <button type="button" onClick={resetForm} className="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600">Cancel</button>}
+                                </div>
                             </form>
                         )}
                     </div>
@@ -233,21 +285,30 @@ const AdminDashboard = () => {
                                 {activeTab === 'artists' && listData.map(item => (
                                     <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
                                         <span>{item.name}</span>
-                                        <button onClick={() => handleDeleteArtist(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => handleEdit(item)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                                            <button onClick={() => handleDeleteArtist(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        </div>
                                     </div>
                                 ))}
 
                                 {activeTab === 'albums' && listData.map(item => (
                                     <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
                                         <span>{item.title} ({item.artist?.name})</span>
-                                        <button onClick={() => handleDeleteAlbum(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => handleEdit(item)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                                            <button onClick={() => handleDeleteAlbum(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        </div>
                                     </div>
                                 ))}
 
                                 {activeTab === 'songs' && listData.map(item => (
                                     <div key={item._id} className="flex justify-between items-center p-2 border-b dark:border-gray-700">
                                         <span>{item.title} - {item.artist?.name}</span>
-                                        <button onClick={() => handleDeleteSong(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        <div className="flex space-x-2">
+                                            <button onClick={() => handleEdit(item)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                                            <button onClick={() => handleDeleteSong(item._id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        </div>
                                     </div>
                                 ))}
 

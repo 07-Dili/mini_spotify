@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://mini-spotify-2dtb.onrender.com/api',
+    // baseURL: 'https://mini-spotify-2dtb.onrender.com/api', //deployed server
+    baseURL: 'http://localhost:5000/api', //local server
 });
 
 // Add a request interceptor to include the token
